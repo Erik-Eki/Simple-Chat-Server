@@ -19,7 +19,7 @@ net.createServer((socket) => {
         switch(command[0]) {
             case 'HELP':
                 console.log("komento", command[0], "tunnistettu");
-                socket.write("Commands are: HELP, NICK, MSG, WHOIS, USERS" + "\r\n");
+                socket.write("Commands are: HELP, NICK, MSG, MSGALL, WHOIS, USERS" + "\r\n");
                 break;
             case 'NICK':
                 this.nick = command[1];
@@ -29,7 +29,7 @@ net.createServer((socket) => {
             case 'MSG':
                 connections.forEach(function(node){
                     if(node.nick == command[1]) {
-                        node.write(socket.nick + " says: " + command.slice(2).join(" ") + "\r\n");
+                        node.write(socket.nick + " DMs: " + command.slice(2).join(" ") + "\r\n");
                     }
                 });
                 break;
@@ -49,6 +49,12 @@ net.createServer((socket) => {
                 });
                 socket.write(JSON.stringify(users) + "\r\n");
                 break;
+            case 'MSGALL':
+                connections.forEach(function(client){
+                    client.write(socket.nick + " says: " + command.slice(1).join(" ") + "\r\n")
+                });
+                break
+
             default:
                 console.log("Command not found");
                 break;
@@ -67,6 +73,26 @@ net.createServer((socket) => {
     console.log("palvelin on nyt käynnistetty");
     console.log("yhteys telnetillä 'telnet localhost 8000'");
 
+
+    
+function broadcast(from, message) {
+
+	// If there are no sockets, then don't broadcast any messages
+	if (sockets.length === 0) {
+		process.stdout.write('Everyone left the chat');
+		return;
+	}
+
+	// If there are clients remaining then broadcast message
+	sockets.forEach(function(socket, index, array){
+		// Dont send any messages to the sender
+		if(socket.nickname === from) return;
+		
+		socket.write(message);
+	
+	});
+	
+};
     
 /*server.on('error', (err) => {
     throw err;
